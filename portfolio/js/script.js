@@ -3,45 +3,79 @@
    ============================================================ */
 
 document.addEventListener("DOMContentLoaded", () => {
-    // Preloader Sequence (GSAP MorphSVG)
+    // Preloader: visual only, never a hard dependency for page access.
     const preloader = document.getElementById('preloader');
-    if (preloader && typeof gsap !== 'undefined') {
-        document.body.style.overflow = 'hidden';
-        
-        if (typeof MorphSVGPlugin !== 'undefined') {
-            gsap.registerPlugin(MorphSVGPlugin);
-        }
+    let preloaderClosed = false;
 
-        let tl = gsap.timeline({
-            defaults: { duration: 0.9, ease: "expo.inOut" }
-        })
-        .to("#morph", { morphSVG: "#speech" })
-        .to("#morph", { morphSVG: "#rocket" })
-        .to("#morph", { morphSVG: "#lightning" })
-        .to("#morph", { morphSVG: "#thumb" })
-        .to("#morph", { morphSVG: "#square" })
-        .to("#morph", { morphSVG: "#grid" })
-        .to("#morph", { morphSVG: "#bulb" });
+    function unlockPage() {
+        document.body.style.overflow = "";
+        document.body.classList.remove("overflow-hidden");
+    }
 
-        // Fade in ARTPRESS logo text below the GSAP animation
-        gsap.to("#preloader-text", {
-            duration: 1.5, 
-            opacity: 1, 
-            y: 0, 
-            ease: "power3.out", 
-            delay: 0.3 
-        });
+    function hidePreloader(delay = 0) {
+        if (!preloader || preloaderClosed) return;
 
-        setTimeout(() => {
-            preloader.style.opacity = '0';
-            setTimeout(() => {
+        window.setTimeout(() => {
+            if (preloaderClosed) return;
+            preloaderClosed = true;
+            preloader.style.opacity = "0";
+            preloader.setAttribute("aria-hidden", "true");
+
+            window.setTimeout(() => {
                 preloader.remove();
-                document.body.style.overflow = '';
-                document.body.classList.remove('overflow-hidden');
-            }, 800);
-        }, 6500); // Sweet spot between 5s and 8.5s
-    } else if (preloader) {
-        setTimeout(() => { preloader.style.opacity = '0'; setTimeout(() => preloader.remove(), 800); }, 1000);
+                unlockPage();
+            }, 650);
+        }, delay);
+    }
+
+    if (preloader) {
+        document.body.style.overflow = "hidden";
+        document.body.classList.add("overflow-hidden");
+        window.setTimeout(() => hidePreloader(), 2400);
+        window.addEventListener("load", () => hidePreloader(350), { once: true });
+
+        try {
+            if (typeof gsap !== "undefined") {
+                gsap
+                    .timeline({
+                        defaults: { ease: "power2.inOut" },
+                        onComplete: () => hidePreloader(180),
+                    })
+                    .to("#morph", {
+                        duration: 0.45,
+                        scale: 0.82,
+                        rotation: -10,
+                        transformOrigin: "50% 50%",
+                    })
+                    .to("#morph", {
+                        duration: 0.45,
+                        scale: 1.08,
+                        rotation: 10,
+                        transformOrigin: "50% 50%",
+                    })
+                    .to("#morph", {
+                        duration: 0.35,
+                        scale: 1,
+                        rotation: 0,
+                        transformOrigin: "50% 50%",
+                    });
+
+                gsap.to("#preloader-text", {
+                    duration: 0.8,
+                    opacity: 1,
+                    y: 0,
+                    ease: "power3.out",
+                    delay: 0.1,
+                });
+            } else {
+                preloader.classList.add("is-fallback");
+            }
+        } catch (error) {
+            preloader.classList.add("is-fallback");
+            hidePreloader(1000);
+        }
+    } else {
+        unlockPage();
     }
 
     // Mobile Menu Toggle
@@ -61,6 +95,112 @@ document.addEventListener("DOMContentLoaded", () => {
             mobileMenu.classList.add("hidden");
         });
     });
+
+    // Public Portfolio Sync (Admin BETA demo)
+    const portfolioGrid = document.getElementById("portfolio-grid");
+    const portfolioStore = window.ArtPressPortfolioStore;
+    const siteMediaStore = window.ArtPressSiteMediaStore;
+
+    function escapeHTML(value) {
+        return String(value ?? "")
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
+    }
+
+    function applySiteMedia() {
+        if (!siteMediaStore) return;
+
+        const mediaBySlot = new Map(
+            siteMediaStore.getMedia().map((item) => [item.slot, item]),
+        );
+
+        document.querySelectorAll("[data-media-slot]").forEach((image) => {
+            const media = mediaBySlot.get(image.dataset.mediaSlot);
+            if (!media) return;
+
+            image.src = media.imageUrl;
+            image.alt = media.alt;
+        });
+
+        refreshScrollTriggers();
+    }
+
+    function refreshScrollTriggers() {
+        if (typeof ScrollTrigger !== "undefined" && typeof ScrollTrigger.refresh === "function") {
+            ScrollTrigger.refresh(true);
+        }
+    }
+
+    function renderPublicPortfolio() {
+        if (!portfolioGrid || !portfolioStore) return;
+
+        const publishedItems = portfolioStore
+            .getItems()
+            .filter((item) => item.status === "publicado");
+
+        if (publishedItems.length === 0) {
+            portfolioGrid.innerHTML = `
+                <div class="lg:col-span-3 bg-surface-container border border-outline-variant/10 rounded-xl p-10 text-center">
+                    <span class="material-symbols-outlined text-primary-container text-5xl mb-4">inventory_2</span>
+                    <h4 class="font-headline text-2xl font-bold text-on-surface mb-2">Nenhum trabalho publicado</h4>
+                    <p class="text-on-surface-variant max-w-xl mx-auto">Os itens em revisão ou arquivados ficam ocultos do site público até serem publicados no painel administrativo.</p>
+                </div>
+            `;
+            return;
+        }
+
+        portfolioGrid.innerHTML = publishedItems
+            .map((item) => `
+                <div class="group cursor-pointer">
+                    <div class="aspect-[4/3] bg-surface-container rounded-xl overflow-hidden mb-5 border border-outline-variant/10 relative shadow-lg">
+                        <img src="${escapeHTML(item.imageUrl)}" alt="${escapeHTML(item.title)}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy" decoding="async">
+                        <div class="absolute inset-0 bg-gradient-to-t from-[#131313] via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    </div>
+                    <span class="text-primary-container font-headline text-xs font-bold tracking-widest uppercase">${escapeHTML(item.category)}</span>
+                    <h4 class="font-headline font-bold text-xl mb-1 text-on-surface group-hover:text-primary-container transition-colors">${escapeHTML(item.title)}</h4>
+                    <p class="text-on-surface-variant text-sm">${escapeHTML(item.description || "Trabalho publicado pela equipe ArtPress")}</p>
+                </div>
+            `)
+            .join("");
+
+        refreshScrollTriggers();
+    }
+
+    applySiteMedia();
+    renderPublicPortfolio();
+
+    if (portfolioStore) {
+        window.addEventListener(portfolioStore.UPDATE_EVENT, renderPublicPortfolio);
+        window.addEventListener("storage", (event) => {
+            if (event.key === portfolioStore.STORAGE_KEY) {
+                renderPublicPortfolio();
+            }
+        });
+        window.addEventListener("focus", renderPublicPortfolio);
+        document.addEventListener("visibilitychange", () => {
+            if (!document.hidden) {
+                renderPublicPortfolio();
+            }
+        });
+    }
+
+    if (siteMediaStore) {
+        window.addEventListener(siteMediaStore.UPDATE_EVENT, applySiteMedia);
+        window.addEventListener("storage", (event) => {
+            if (event.key === siteMediaStore.STORAGE_KEY) {
+                applySiteMedia();
+            }
+        });
+        window.addEventListener("focus", applySiteMedia);
+        document.addEventListener("visibilitychange", () => {
+            if (!document.hidden) {
+                applySiteMedia();
+            }
+        });
+    }
 
     // Contact Form Submission Mock
     const contactForm = document.getElementById("contact-form");
@@ -159,67 +299,133 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // GSAP ScrollTrigger Animations
-    if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
-        gsap.registerPlugin(ScrollTrigger);
+    let scrollAnimationsStarted = false;
+    let optionalGsapLoading = false;
 
-        // 1. Reveal Sections
-        const sections = document.querySelectorAll('section');
-        sections.forEach(section => {
-            gsap.from(section.querySelector('.container'), {
-                scrollTrigger: {
-                    trigger: section,
-                    start: "top 85%",
-                    toggleActions: "play none none none"
-                },
-                y: 50,
-                opacity: 0,
-                duration: 1.2,
-                ease: "power3.out"
-            });
-        });
-
-        // 2. Staggered Cards (Services & Portfolio)
-        const gridContainers = document.querySelectorAll('.grid');
-        gridContainers.forEach(grid => {
-            const cards = grid.querySelectorAll('.group');
-            if (cards.length > 0) {
-                gsap.from(cards, {
-                    scrollTrigger: {
-                        trigger: grid,
-                        start: "top 80%",
-                    },
-                    y: 60,
-                    opacity: 0,
-                    duration: 1,
-                    stagger: 0.15,
-                    ease: "power2.out"
-                });
+    function loadOptionalScript(src) {
+        return new Promise((resolve, reject) => {
+            const existingScript = document.querySelector(`script[src="${src}"]`);
+            if (existingScript) {
+                existingScript.addEventListener("load", resolve, { once: true });
+                existingScript.addEventListener("error", reject, { once: true });
+                return;
             }
-        });
 
-        // 3. Watermark Parallax Effect
-        const watermarks = document.querySelectorAll('.absolute.inset-0.flex, .absolute.inset-x-0.bottom-0, .absolute.left-0.top-0');
-        watermarks.forEach(wm => {
-            gsap.to(wm, {
-                scrollTrigger: {
-                    trigger: wm.parentElement,
-                    start: "top bottom",
-                    end: "bottom top",
-                    scrub: 1
-                },
-                y: -100,
-                ease: "none"
+            const script = document.createElement("script");
+            script.src = src;
+            script.async = true;
+            script.onload = resolve;
+            script.onerror = reject;
+            document.head.appendChild(script);
+        });
+    }
+
+    function initScrollAnimations() {
+        if (scrollAnimationsStarted || typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined') {
+            return;
+        }
+
+        scrollAnimationsStarted = true;
+
+        try {
+            gsap.registerPlugin(ScrollTrigger);
+
+            // 1. Reveal Sections
+            const sections = document.querySelectorAll('section');
+            sections.forEach(section => {
+                const container = section.querySelector('.container');
+                if (!container) return;
+
+                gsap.from(container, {
+                    scrollTrigger: {
+                        trigger: section,
+                        start: "top 85%",
+                        toggleActions: "play none none none"
+                    },
+                    y: 50,
+                    opacity: 0,
+                    duration: 1.2,
+                    ease: "power3.out"
+                });
             });
-        });
 
-        // 4. Hero Content Specific Reveal
-        gsap.from("#hero h1, #hero p, #hero .flex.gap-4", {
-            duration: 1.5,
-            y: 40,
-            opacity: 0,
-            stagger: 0.2,
-            ease: "power4.out",
-            delay: 7 // Wait for preloader
-        });
+            // 2. Staggered Cards (Services & Portfolio)
+            const gridContainers = document.querySelectorAll('#services .grid, #portfolio-grid, #testimonials .grid');
+            gridContainers.forEach(grid => {
+                const cards = grid.querySelectorAll('.group');
+                if (cards.length > 0) {
+                    gsap.from(cards, {
+                        scrollTrigger: {
+                            trigger: grid,
+                            start: "top 80%",
+                        },
+                        y: 60,
+                        opacity: 0,
+                        duration: 1,
+                        stagger: 0.15,
+                        ease: "power2.out"
+                    });
+                }
+            });
+
+            // 3. Watermark Parallax Effect
+            const watermarks = document.querySelectorAll('.absolute.inset-0.flex, .absolute.inset-x-0.bottom-0, .absolute.left-0.top-0');
+            watermarks.forEach(wm => {
+                if (!wm.parentElement) return;
+
+                gsap.to(wm, {
+                    scrollTrigger: {
+                        trigger: wm.parentElement,
+                        start: "top bottom",
+                        end: "bottom top",
+                        scrub: 1
+                    },
+                    y: -100,
+                    ease: "none"
+                });
+            });
+
+            // 4. Hero Content Specific Reveal
+            gsap.from("#hero h1, #hero p, #hero [data-hero-actions]", {
+                duration: 1,
+                y: 40,
+                opacity: 0,
+                stagger: 0.15,
+                ease: "power4.out",
+                delay: 0.35
+            });
+        } catch (error) {
+            refreshScrollTriggers();
+        }
+    }
+
+    function loadOptionalGsap() {
+        if (scrollAnimationsStarted) {
+            return;
+        }
+
+        if (typeof gsap !== "undefined" && typeof ScrollTrigger !== "undefined") {
+            initScrollAnimations();
+            return;
+        }
+
+        if (optionalGsapLoading) {
+            return;
+        }
+
+        optionalGsapLoading = true;
+
+        loadOptionalScript("https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js")
+            .then(() => loadOptionalScript("https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"))
+            .then(initScrollAnimations)
+            .catch(() => {
+                optionalGsapLoading = false;
+            });
+    }
+
+    if (document.readyState === "complete") {
+        window.setTimeout(loadOptionalGsap, 1000);
+    } else {
+        window.addEventListener("load", () => window.setTimeout(loadOptionalGsap, 1000), { once: true });
     }
 });

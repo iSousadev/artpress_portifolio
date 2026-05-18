@@ -1,0 +1,864 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ArtPress Admin | Flow-Based Agile</title>
+    <link rel="icon" type="image/svg+xml" href="images/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/tailwind.build.css" />
+    <script src="js/portfolio-store.js"></script>
+    <script src="js/site-media-store.js"></script>
+    <style>
+      .beta-stripes {
+        background-image:
+          linear-gradient(
+            90deg,
+            rgba(212, 160, 23, 0.2),
+            rgba(20, 20, 20, 0.96) 48%
+          ),
+          repeating-linear-gradient(
+            -45deg,
+            rgba(212, 160, 23, 0.13) 0,
+            rgba(212, 160, 23, 0.13) 8px,
+            transparent 8px,
+            transparent 16px
+          );
+      }
+
+      .toast-enter {
+        animation: toast-enter 180ms ease-out;
+      }
+
+      @keyframes toast-enter {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    </style>
+  </head>
+  <body
+    class="min-h-screen bg-[#0d0d0d] text-[#f0ede8] font-['DM_Sans'] selection:bg-[#D4A017] selection:text-[#0d0d0d]"
+  >
+    <div id="app" class="min-h-screen"></div>
+
+    <script>
+      const FLOW_STATUS = [
+        { key: "revisao", label: "Em Revisão", tone: "review" },
+        { key: "publicado", label: "Publicado", tone: "published" },
+        { key: "arquivado", label: "Arquivado", tone: "archived" },
+      ];
+
+      let isLoggedIn = false;
+      let activeTab = "portfolio";
+      let viewMode = "kanban";
+      let deleteTargetId = null;
+      let editTargetId = null;
+      let mediaTargetSlot = null;
+      let toasts = [];
+      let toastId = 0;
+      const PortfolioStore = window.ArtPressPortfolioStore;
+      const SiteMediaStore = window.ArtPressSiteMediaStore;
+      let items = PortfolioStore.getItems();
+      let mediaItems = SiteMediaStore.getMedia();
+
+      const app = document.getElementById("app");
+
+      function escapeHTML(value) {
+        return String(value)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+      }
+
+      function statusMeta(status) {
+        return (
+          FLOW_STATUS.find((item) => item.key === status) || FLOW_STATUS[0]
+        );
+      }
+
+      function countByStatus(status) {
+        return items.filter((item) => item.status === status).length;
+      }
+
+      function nextStatus(status) {
+        if (status === "revisao") return "publicado";
+        if (status === "publicado") return "arquivado";
+        return "";
+      }
+
+      function previousStatus(status) {
+        if (status === "publicado") return "revisao";
+        if (status === "arquivado") return "publicado";
+        return "";
+      }
+
+      function formatDate(date) {
+        return new Intl.DateTimeFormat("pt-BR", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        }).format(new Date(date + "T12:00:00"));
+      }
+
+      function statusToneClass(status) {
+        if (status === "publicado") return "bg-[#4CAF82] text-[#0d0d0d]";
+        if (status === "arquivado") return "bg-[#888] text-[#0d0d0d]";
+        return "bg-[#D4A017] text-[#0d0d0d]";
+      }
+
+      function metricToneClass(tone) {
+        if (tone === "published") return "text-[#4CAF82]";
+        return "text-[#D4A017]";
+      }
+
+      function buttonClass(type) {
+        const base =
+          "inline-flex min-h-[42px] items-center justify-center gap-2 border px-4 py-2 text-xs font-black uppercase tracking-[0.08em] transition hover:-translate-y-0.5";
+        if (type === "primary")
+          return base + " border-[#D4A017] bg-[#D4A017] text-[#0d0d0d]";
+        if (type === "danger")
+          return base + " border-[#e05555]/50 bg-[#e05555]/15 text-[#ffb1b1]";
+        return base + " border-[#2a2a2a] bg-[#0d0d0d] text-[#f0ede8]";
+      }
+
+      function addToast(message, type = "default") {
+        const toast = { id: ++toastId, message, type };
+        toasts = [...toasts, toast];
+        render();
+
+        setTimeout(() => {
+          toasts = toasts.filter((item) => item.id !== toast.id);
+          render();
+        }, 3200);
+      }
+
+      function handleLogin() {
+        const user = document.getElementById("login-user").value.trim();
+        const password = document.getElementById("login-password").value;
+
+        if (user === "admin" && password === "artpress") {
+          isLoggedIn = true;
+          addToast("Acesso administrativo liberado.", "success");
+          return;
+        }
+
+        addToast("Credenciais inválidas. Use admin / artpress.", "danger");
+      }
+
+      function handleLogout() {
+        isLoggedIn = false;
+        activeTab = "portfolio";
+        addToast("Sessão encerrada.", "default");
+      }
+
+      function setTab(tab) {
+        activeTab = tab;
+        const tabLabels = {
+          portfolio: "Gestão de Portfólio.",
+          media: "Imagens do Site.",
+          agile: "Fluxo Agile.",
+        };
+        // addToast(tabLabels[tab] || "Aba administrativa aberta.", "default");
+        render();
+      }
+
+      function setView(mode) {
+        viewMode = mode;
+        addToast(
+          mode === "kanban"
+            ? "Visualização Kanban ativa."
+            : "Visualização em grade ativa.",
+          "default",
+        );
+        render();
+      }
+
+      function moveItem(id, status) {
+        const item = items.find((entry) => entry.id === id);
+        items = items.map((entry) =>
+          entry.id === id ? { ...entry, status } : entry,
+        );
+        persistItems();
+        addToast(
+          (item ? item.title : "Item") +
+            " movido para " +
+            statusMeta(status).label +
+            ".",
+          "success",
+        );
+      }
+
+      function openAddModal() {
+        document.body.insertAdjacentHTML("beforeend", renderAddModal());
+        addToast("Modal de novo trabalho aberto.", "default");
+      }
+
+      function openEditModal(id) {
+        editTargetId = id;
+        const modal = renderEditModal();
+        if (!modal) return;
+
+        document.body.insertAdjacentHTML("beforeend", modal);
+        addToast("Edição de trabalho aberta.", "default");
+      }
+
+      function openResetModal() {
+        document.body.insertAdjacentHTML("beforeend", renderResetModal());
+        addToast("Confirmação de reset aberta.", "default");
+      }
+
+      function openMediaEditModal(slot) {
+        mediaTargetSlot = slot;
+        const modal = renderMediaEditModal();
+        if (!modal) return;
+
+        document.body.insertAdjacentHTML("beforeend", modal);
+        addToast("Edição de imagem aberta.", "default");
+      }
+
+      function openMediaResetModal() {
+        document.body.insertAdjacentHTML("beforeend", renderMediaResetModal());
+        addToast("Confirmação de reset das imagens aberta.", "default");
+      }
+
+      function closeModal() {
+        const modal = document.querySelector(".modal-backdrop");
+        if (modal) modal.remove();
+        deleteTargetId = null;
+        editTargetId = null;
+        mediaTargetSlot = null;
+      }
+
+      function addItem() {
+        const title = document.getElementById("item-title").value.trim();
+        const category = document.getElementById("item-category").value.trim();
+        const imageUrl = document.getElementById("item-image").value.trim();
+        const description = document
+          .getElementById("item-description")
+          .value.trim();
+        const status = document.getElementById("item-status").value;
+
+        if (!title || !category || !imageUrl) {
+          addToast("Preencha título, categoria e URL da imagem.", "danger");
+          return;
+        }
+
+        items = [
+          {
+            id: Date.now(),
+            title,
+            category,
+            description,
+            imageUrl,
+            status,
+            date: new Date().toISOString().slice(0, 10),
+          },
+          ...items,
+        ];
+
+        closeModal();
+        persistItems();
+        addToast("Novo trabalho entrou no fluxo contínuo.", "success");
+        render();
+      }
+
+      function updateItem() {
+        const title = document.getElementById("item-title").value.trim();
+        const category = document.getElementById("item-category").value.trim();
+        const imageUrl = document.getElementById("item-image").value.trim();
+        const description = document
+          .getElementById("item-description")
+          .value.trim();
+        const status = document.getElementById("item-status").value;
+
+        if (!title || !category || !imageUrl) {
+          addToast("Preencha título, categoria e URL da imagem.", "danger");
+          return;
+        }
+
+        const current = items.find((entry) => entry.id === editTargetId);
+        items = items.map((entry) =>
+          entry.id === editTargetId
+            ? {
+                ...entry,
+                title,
+                category,
+                description,
+                imageUrl,
+                status,
+              }
+            : entry,
+        );
+
+        closeModal();
+        persistItems();
+        addToast(
+          (current ? current.title : "Item") + " atualizado.",
+          "success",
+        );
+        render();
+      }
+
+      function openDeleteModal(id) {
+        deleteTargetId = id;
+        document.body.insertAdjacentHTML("beforeend", renderDeleteModal());
+        addToast("Confirmação de remoção aberta.", "default");
+      }
+
+      function confirmDelete() {
+        const item = items.find((entry) => entry.id === deleteTargetId);
+        items = items.filter((entry) => entry.id !== deleteTargetId);
+        closeModal();
+        persistItems();
+        addToast(
+          (item ? item.title : "Item") + " removido do painel.",
+          "danger",
+        );
+        render();
+      }
+
+      function confirmReset() {
+        items = PortfolioStore.resetItems();
+        closeModal();
+        addToast("Dados da demo restaurados.", "success");
+        render();
+      }
+
+      function persistItems() {
+        items = PortfolioStore.saveItems(items);
+      }
+
+      function updateMediaItem() {
+        const imageUrl = document.getElementById("media-image").value.trim();
+        const alt = document.getElementById("media-alt").value.trim();
+        const current = mediaItems.find(
+          (entry) => entry.slot === mediaTargetSlot,
+        );
+
+        if (!imageUrl || !alt) {
+          addToast("Preencha URL da imagem e texto alternativo.", "danger");
+          return;
+        }
+
+        mediaItems = mediaItems.map((entry) =>
+          entry.slot === mediaTargetSlot ? { ...entry, imageUrl, alt } : entry,
+        );
+
+        closeModal();
+        persistMedia();
+        addToast(
+          (current ? current.label : "Imagem") + " atualizada.",
+          "success",
+        );
+        render();
+      }
+
+      function confirmMediaReset() {
+        mediaItems = SiteMediaStore.resetMedia();
+        closeModal();
+        addToast("Imagens principais restauradas.", "success");
+        render();
+      }
+
+      function persistMedia() {
+        mediaItems = SiteMediaStore.saveMedia(mediaItems);
+      }
+
+      function renderLogin() {
+        return `
+        <main class="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top_right,rgba(212,160,23,.14),transparent_34rem)] p-6 md:p-8">
+          <section class="grid w-full max-w-5xl gap-6 border border-[#2a2a2a] bg-[#141414] p-4 shadow-[0_26px_90px_rgba(0,0,0,.5)] md:p-8 lg:grid-cols-[1.1fr_.9fr]" aria-label="Login administrativo">
+            ${renderBetaBanner("lg:col-span-2")}
+            <div class="flex min-h-[320px] flex-col justify-end border border-[#1e1e1e] bg-cover bg-center p-6 md:min-h-[430px] md:p-8" style="background-image: linear-gradient(135deg, rgba(13,13,13,.28), rgba(13,13,13,.96)), url('assets/optimized/hero-main.webp');">
+              <span class="mb-2 text-xs font-extrabold uppercase tracking-[0.18em] text-[#D4A017]">ArtPress Admin</span>
+              <h1 class="font-['Bebas_Neue'] text-[clamp(4rem,10vw,7.4rem)] leading-none tracking-[0.05em] text-[#D4A017]">PAINEL DE FLUXO</h1>
+              <p class="mt-4 max-w-xl leading-7 text-[#f0ede8]/70">Gestão acadêmica de portfólio com Flow-Based Agile: cada trabalho entra em revisão, avança quando está pronto e entrega valor continuamente.</p>
+            </div>
+            <div class="flex flex-col justify-center gap-5 border border-[#1e1e1e] bg-[#0d0d0d] p-6 md:p-8">
+              <label class="grid gap-2 text-xs font-extrabold uppercase tracking-[0.12em] text-[#f0ede8]/80">
+                Usuário
+                <input id="login-user" class="min-h-[46px] w-full border border-[#2a2a2a] bg-[#141414] px-4 py-3 text-[#f0ede8] outline-none focus:border-[#D4A017] focus:ring-2 focus:ring-[#D4A017]/20" type="text" placeholder="admin" autocomplete="username">
+              </label>
+              <label class="grid gap-2 text-xs font-extrabold uppercase tracking-[0.12em] text-[#f0ede8]/80">
+                Senha
+                <input id="login-password" class="min-h-[46px] w-full border border-[#2a2a2a] bg-[#141414] px-4 py-3 text-[#f0ede8] outline-none focus:border-[#D4A017] focus:ring-2 focus:ring-[#D4A017]/20" type="password" placeholder="artpress" autocomplete="current-password">
+              </label>
+              <button class="${buttonClass("primary")} w-full" onclick="handleLogin()">Entrar</button>
+              <p class="m-0 text-sm text-[#888]">Credenciais fixas: admin / artpress</p>
+            </div>
+          </section>
+        </main>
+        ${renderToasts()}
+      `;
+      }
+
+      function renderLayout() {
+        return `
+        <div class="min-h-screen bg-[radial-gradient(circle_at_top_right,rgba(212,160,23,.14),transparent_34rem)] lg:grid lg:grid-cols-[280px_minmax(0,1fr)]">
+          <aside class="border-b border-[#1e1e1e] bg-[#141414] p-6 lg:sticky lg:top-0 lg:min-h-screen lg:border-b-0 lg:border-r lg:p-7">
+            <div class="font-['Bebas_Neue'] text-5xl leading-none tracking-[0.06em] text-[#D4A017]"><span class="text-[#f0ede8]">ART</span>PRESS</div>
+          
+            <nav class="mt-8 grid gap-2 sm:grid-cols-3 lg:grid-cols-1" aria-label="Navegação administrativa">
+              <button class="min-h-[50px] border px-4 py-6 text-left font-extrabold ${activeTab === "portfolio" ? "border-[#D4A017] bg-[#D4A017] text-[#0d0d0d]" : "border-[#1e1e1e] bg-[#0d0d0d] text-[#f0ede8]/75 hover:border-[#D4A017] hover:text-[#D4A017]"}" onclick="setTab('portfolio')">Gestão de Portfólio</button>
+              <button class="min-h-[50px] border px-4 py-3 text-left font-extrabold ${activeTab === "media" ? "border-[#D4A017] bg-[#D4A017] text-[#0d0d0d]" : "border-[#1e1e1e] bg-[#0d0d0d] text-[#f0ede8]/75 hover:border-[#D4A017] hover:text-[#D4A017]"}" onclick="setTab('media')">Imagens do Site</button>
+              <button class="min-h-[50px] border px-4 py-3 text-left font-extrabold ${activeTab === "agile" ? "border-[#D4A017] bg-[#D4A017] text-[#0d0d0d]" : "border-[#1e1e1e] bg-[#0d0d0d] text-[#f0ede8]/75 hover:border-[#D4A017] hover:text-[#D4A017]"}" onclick="setTab('agile')">Fluxo Agile</button>
+            </nav>
+          </aside>
+
+          <main class="min-w-0 p-4 md:p-7">
+            <header class="mb-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <span class="mb-2 block text-xs font-extrabold uppercase tracking-[0.18em] text-[#D4A017]">Painel Administrativo</span>
+                <h1 class="font-['Bebas_Neue'] text-[clamp(2.8rem,6vw,5rem)] leading-none tracking-[0.05em]">${getActiveTabTitle()}</h1>
+              </div>
+              <button class="${buttonClass("ghost")}" onclick="handleLogout()">Sair</button>
+            </header>
+
+            ${renderBetaBanner()}
+            ${renderFlowBanner()}
+            ${renderDashboard()}
+            ${renderActivePanel()}
+          </main>
+        </div>
+        ${renderToasts()}
+      `;
+      }
+
+      function getActiveTabTitle() {
+        if (activeTab === "media") return "Imagens do Site";
+        if (activeTab === "agile") return "Fluxo Agile";
+        return "Gestão de Portfólio";
+      }
+
+      function renderActivePanel() {
+        if (activeTab === "media") return renderMediaPanel();
+        if (activeTab === "agile") return renderAgilePanel();
+        return renderPortfolioPanel();
+      }
+
+      function renderBetaBanner(extraClass = "") {
+        return `
+        <section class="beta-stripes relative overflow-hidden border border-[#D4A017]/40 p-4 shadow-[inset_4px_0_0_#D4A017,0_18px_44px_rgba(0,0,0,.24)] md:p-5 ${extraClass}" aria-label="Aviso de versão beta">
+          <div class="relative z-10 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+            <div class="flex w-full flex-col justify-center gap-4 sm:flex-row sm:items-center">
+              <span class="inline-flex min-h-9 w-fit items-center justify-center bg-[#D4A017] px-3 py-2 text-xs font-black uppercase tracking-[0.14em] text-[#0d0d0d]">BETA</span>
+              <div class="flex-1 text-center">
+                <strong class="block font-['Bebas_Neue'] text-3xl font-normal uppercase leading-none tracking-[0.06em] text-[#f0ede8] md:text-4xl">Protótipo em validação</strong>
+                
+              </div>
+            </div>
+          </div>
+        </section>
+      `;
+      }
+
+      function renderFlowBanner() {
+        const steps = FLOW_STATUS.map(
+          (status, index) => `
+        <div class="relative flex min-h-[74px] items-center gap-3 border border-[#1e1e1e] bg-[#0d0d0d] p-3">
+          <span class="inline-flex size-9 items-center justify-center font-black ${statusToneClass(status.key)}">${countByStatus(status.key)}</span>
+          <strong class="text-sm">${status.label}</strong>
+          ${index < FLOW_STATUS.length - 1 ? '<span class="absolute -right-4 z-10 hidden text-2xl font-black text-[#D4A017] xl:block">→</span>' : ""}
+        </div>
+      `,
+        ).join("");
+
+        return `
+      `;
+      }
+
+      function renderDashboard() {
+        return `
+        <section class="mb-5 grid gap-4 md:grid-cols-3" aria-label="Métricas do portfólio">
+          ${renderMetric("Total Publicado", countByStatus("publicado"), "published")}
+          ${renderMetric("Em Revisão", countByStatus("revisao"), "review")}
+          ${renderMetric("Total Geral", items.length, "total")}
+        </section>
+      `;
+      }
+
+      function renderMetric(label, value, tone) {
+        return `
+        <article class="flex min-h-[132px] flex-col justify-between border border-[#1e1e1e] bg-[#141414] p-5">
+          <span class="text-xs font-extrabold uppercase tracking-[0.12em] text-[#f0ede8]/65">${label}</span>
+          <strong class="font-['Bebas_Neue'] text-6xl leading-none ${metricToneClass(tone)}">${value}</strong>
+        </article>
+      `;
+      }
+
+      function renderPortfolioPanel() {
+        return `
+        <section class="border border-[#1e1e1e] bg-[#141414] p-4 md:p-5">
+          <div class="mb-5 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+            <div>
+              <h2 class="font-['Bebas_Neue'] text-[clamp(2rem,4vw,3.4rem)] leading-none tracking-[0.05em]">Trabalhos da ArtPress</h2>
+              <p class="mt-2 text-sm leading-6 text-[#f0ede8]/65">Controle visual do fluxo contínuo: revisar, publicar e arquivar.</p>
+            </div>
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center xl:justify-end">
+              <div class="inline-flex border border-[#2a2a2a] bg-[#0d0d0d] p-1">
+                <button class="min-h-10 flex-1 px-4 py-2 text-sm font-black ${viewMode === "kanban" ? "bg-[#D4A017] text-[#0d0d0d]" : "text-[#f0ede8]/75"}" onclick="setView('kanban')">Kanban</button>
+                <button class="min-h-10 flex-1 px-4 py-2 text-sm font-black ${viewMode === "grade" ? "bg-[#D4A017] text-[#0d0d0d]" : "text-[#f0ede8]/75"}" onclick="setView('grade')">Grade</button>
+              </div>
+              <button class="${buttonClass("primary")}" onclick="openAddModal()">Novo Trabalho</button>
+              <button class="${buttonClass("ghost")}" onclick="openResetModal()">Resetar Demo</button>
+            </div>
+          </div>
+          ${viewMode === "kanban" ? renderKanban() : renderGrid()}
+        </section>
+      `;
+      }
+
+      function renderMediaPanel() {
+        const sections = [...new Set(mediaItems.map((item) => item.section))];
+
+        return `
+        <section class="grid gap-5 border border-[#1e1e1e] bg-[#141414] p-4 md:p-5">
+          <div class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+            <div>
+              <h2 class="font-['Bebas_Neue'] text-[clamp(2rem,4vw,3.4rem)] leading-none tracking-[0.05em]">Imagens principais da landing</h2>
+              <p class="mt-2 max-w-3xl text-sm leading-6 text-[#f0ede8]/65">Troque as imagens mais visíveis do site para demonstrar controle editorial sem transformar a demo em um CMS completo.</p>
+            </div>
+            <button class="${buttonClass("ghost")}" onclick="openMediaResetModal()">Resetar Imagens</button>
+          </div>
+
+          <div class="grid gap-6">
+            ${sections
+              .map(
+                (section) => `
+                <section class="grid gap-3">
+                  <div class="flex items-center justify-between gap-3 border-b border-[#2a2a2a] pb-2">
+                    <h3 class="font-['Bebas_Neue'] text-3xl leading-none tracking-[0.05em] text-[#D4A017]">${section}</h3>
+                    <span class="text-xs font-black uppercase tracking-[0.12em] text-[#f0ede8]/50">${mediaItems.filter((item) => item.section === section).length} slots</span>
+                  </div>
+                  <div class="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
+                    ${mediaItems
+                      .filter((item) => item.section === section)
+                      .map((item) => renderMediaCard(item))
+                      .join("")}
+                  </div>
+                </section>
+              `,
+              )
+              .join("")}
+          </div>
+        </section>
+      `;
+      }
+
+      function renderMediaCard(item) {
+        return `
+        <article class="overflow-hidden border border-[#2a2a2a] bg-[#0d0d0d]">
+          <div class="aspect-[16/10] overflow-hidden bg-[#141414]">
+            <img class="h-full w-full object-cover contrast-105 saturate-[.92]" src="${escapeHTML(item.imageUrl)}" alt="${escapeHTML(item.alt)}">
+          </div>
+          <div class="grid gap-3 p-3.5">
+            <div>
+              <span class="text-[0.68rem] font-black uppercase tracking-[0.12em] text-[#D4A017]">${escapeHTML(item.slot)}</span>
+              <h4 class="mt-1 text-base font-bold leading-snug text-[#f0ede8]">${escapeHTML(item.label)}</h4>
+              <p class="mt-1 text-sm leading-5 text-[#f0ede8]/60">${escapeHTML(item.alt)}</p>
+            </div>
+            <button class="${buttonClass("primary")} !min-h-[36px] !px-3 !py-2 !text-[0.7rem]" onclick="openMediaEditModal('${escapeHTML(item.slot)}')">Editar Imagem</button>
+          </div>
+        </article>
+      `;
+      }
+
+      function renderKanban() {
+        return `
+        <div class="grid gap-4 xl:grid-cols-3">
+          ${FLOW_STATUS.map(
+            (status) => `
+            <section class="min-h-[420px] border border-[#1e1e1e] bg-[#0d0d0d] p-3">
+              <div class="mb-3 flex items-center justify-between gap-3">
+                <h3 class="font-['Bebas_Neue'] text-3xl leading-none tracking-[0.05em]">${status.label}</h3>
+                <span class="inline-flex min-h-8 min-w-8 items-center justify-center bg-[#D4A017] px-3 text-sm font-black text-[#0d0d0d]">${countByStatus(status.key)}</span>
+              </div>
+              <div class="grid gap-3">
+                ${items
+                  .filter((item) => item.status === status.key)
+                  .map((item) => renderCard(item))
+                  .join("")}
+              </div>
+            </section>
+          `,
+          ).join("")}
+        </div>
+      `;
+      }
+
+      function renderGrid() {
+        return `
+        <div class="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
+          ${items.map((item) => renderCard(item, true)).join("")}
+        </div>
+      `;
+      }
+
+      function renderCard(item, compact = false) {
+        const meta = statusMeta(item.status);
+        const previous = previousStatus(item.status);
+        const next = nextStatus(item.status);
+
+        return `
+        <article class="overflow-hidden border border-[#2a2a2a] bg-[#141414]">
+          <div class="${compact ? "aspect-[16/8.5]" : "aspect-[16/10]"} overflow-hidden bg-[#0d0d0d]">
+            <img class="h-full w-full object-cover contrast-105 saturate-[.92]" src="${escapeHTML(item.imageUrl)}" alt="${escapeHTML(item.title)}">
+          </div>
+          <div class="p-3.5">
+            <div class="flex items-center justify-between gap-3">
+              <span class="inline-flex min-h-[25px] items-center px-2.5 py-1 text-[0.7rem] font-black uppercase tracking-[0.1em] ${statusToneClass(item.status)}">${meta.label}</span>
+              <span class="whitespace-nowrap text-xs text-[#888]">${formatDate(item.date)}</span>
+            </div>
+            <h3 class="mb-1 mt-3 text-base font-bold leading-snug text-[#f0ede8]">${escapeHTML(item.title)}</h3>
+            <p class="mb-1 text-sm font-bold text-[#D4A017]">${escapeHTML(item.category)}</p>
+            <p class="mb-3 text-sm leading-5 text-[#f0ede8]/65">${escapeHTML(item.description || "Sem descrição cadastrada")}</p>
+            <div class="flex flex-wrap gap-2">
+              <button class="${buttonClass("ghost")} !min-h-[34px] !px-2.5 !py-1.5 !text-[0.68rem]" onclick="openEditModal(${item.id})">Editar</button>
+              ${previous ? `<button class="${buttonClass("ghost")} !min-h-[34px] !px-2.5 !py-1.5 !text-[0.68rem]" onclick="moveItem(${item.id}, '${previous}')">Voltar</button>` : ""}
+              ${next ? `<button class="${buttonClass("primary")} !min-h-[34px] !px-2.5 !py-1.5 !text-[0.68rem]" onclick="moveItem(${item.id}, '${next}')">Avançar</button>` : ""}
+              <button class="${buttonClass("danger")} !min-h-[34px] !px-2.5 !py-1.5 !text-[0.68rem]" onclick="openDeleteModal(${item.id})">Remover</button>
+            </div>
+          </div>
+        </article>
+      `;
+      }
+
+      function renderAgilePanel() {
+        return `
+        <section class="grid gap-6 border border-[#1e1e1e] bg-[#141414] p-4 md:p-5">
+          <div class="grid gap-4 xl:grid-cols-3">
+            ${FLOW_STATUS.map(
+              (status) => `
+              <section class="border border-[#1e1e1e] bg-[#0d0d0d] p-3">
+                <div class="mb-3 flex items-center justify-between gap-3">
+                  <h3 class="font-['Bebas_Neue'] text-3xl leading-none tracking-[0.05em]">${status.label}</h3>
+                  <span class="inline-flex min-h-8 items-center justify-center bg-[#D4A017] px-3 text-xs font-black text-[#0d0d0d]">${countByStatus(status.key)} itens</span>
+                </div>
+                <div class="grid gap-3">
+                  ${items
+                    .filter((item) => item.status === status.key)
+                    .map((item) => renderCard(item, true))
+                    .join("")}
+                </div>
+              </section>
+            `,
+            ).join("")}
+          </div>
+        </section>
+      `;
+        // <div class="max-w-5xl">
+        //       <span class="mb-2 block text-xs font-extrabold uppercase tracking-[0.18em] text-[#D4A017]">Lean + Kanban Híbrido</span>
+        //       <h2 class="font-['Bebas_Neue'] text-[clamp(2.4rem,5vw,4.8rem)] leading-none tracking-[0.05em] text-[#D4A017]">Fluxo contínuo aplicado à gráfica</h2>
+        //       <p class="mt-4 leading-7 text-[#f0ede8]/70">O Flow-Based Agile substitui ciclos de sprint por uma esteira contínua. Na ArtPress, cada peça entra em <strong class="text-[#f0ede8]">Em Revisão</strong>, avança para <strong class="text-[#f0ede8]">Publicado</strong> quando é aprovada e segue para <strong class="text-[#f0ede8]">Arquivado</strong> quando deixa de ser relevante para o portfólio.</p>
+        //       <p class="mt-3 leading-7 text-[#f0ede8]/70">Esse modelo reduz gargalos porque o time não espera uma janela fixa de sprint para entregar. Assim que um catálogo, banner, embalagem ou identidade visual está pronto, ele pode gerar valor no site.</p>
+        //     </div>
+      }
+
+      function renderAddModal() {
+        return `
+        <div class="modal-backdrop fixed inset-0 z-[80] flex items-center justify-center bg-black/75 p-4">
+          <section class="w-full max-w-xl border border-[#2a2a2a] bg-[#141414] p-5 shadow-[0_32px_100px_rgba(0,0,0,.62)]" role="dialog" aria-modal="true" aria-label="Adicionar trabalho">
+            <div class="mb-5 flex items-center justify-between gap-4">
+              <h2 class="font-['Bebas_Neue'] text-4xl leading-none tracking-[0.05em]">Adicionar Trabalho</h2>
+              <button class="size-10 border border-[#2a2a2a] bg-[#0d0d0d] text-2xl leading-none text-[#f0ede8]" onclick="closeModal()" aria-label="Fechar modal">×</button>
+            </div>
+            <div class="grid gap-4">
+              ${renderField("item-title", "Título", "Ex: Fachada Comercial Premium")}
+              ${renderField("item-category", "Categoria", "Ex: Fachada")}
+              ${renderField("item-image", "URL da imagem", "https://... ou assets/optimized/portfolio-1.webp")}
+              ${renderField("item-description", "Descrição curta", "Ex: Projeto completo de fachada e letreiro")}
+              ${renderStatusSelect("revisao", "Status inicial")}
+            </div>
+            <div class="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-end">
+              <button class="${buttonClass("ghost")}" onclick="closeModal()">Cancelar</button>
+              <button class="${buttonClass("primary")}" onclick="addItem()">Adicionar ao Fluxo</button>
+            </div>
+          </section>
+        </div>
+      `;
+      }
+
+      function renderEditModal() {
+        const item = items.find((entry) => entry.id === editTargetId);
+        if (!item) return "";
+
+        return `
+        <div class="modal-backdrop fixed inset-0 z-[80] flex items-center justify-center bg-black/75 p-4">
+          <section class="w-full max-w-xl border border-[#2a2a2a] bg-[#141414] p-5 shadow-[0_32px_100px_rgba(0,0,0,.62)]" role="dialog" aria-modal="true" aria-label="Editar trabalho">
+            <div class="mb-5 flex items-center justify-between gap-4">
+              <h2 class="font-['Bebas_Neue'] text-4xl leading-none tracking-[0.05em]">Editar Trabalho</h2>
+              <button class="size-10 border border-[#2a2a2a] bg-[#0d0d0d] text-2xl leading-none text-[#f0ede8]" onclick="closeModal()" aria-label="Fechar modal">×</button>
+            </div>
+            <div class="grid gap-4">
+              ${renderField("item-title", "Título", "Ex: Fachada Comercial Premium", item.title)}
+              ${renderField("item-category", "Categoria", "Ex: Fachada", item.category)}
+              ${renderField("item-image", "URL da imagem", "https://... ou assets/optimized/portfolio-1.webp", item.imageUrl)}
+              ${renderField("item-description", "Descrição curta", "Ex: Projeto completo de fachada e letreiro", item.description || "")}
+              ${renderStatusSelect(item.status, "Status")}
+            </div>
+            <div class="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-end">
+              <button class="${buttonClass("ghost")}" onclick="closeModal()">Cancelar</button>
+              <button class="${buttonClass("primary")}" onclick="updateItem()">Salvar Alterações</button>
+            </div>
+          </section>
+        </div>
+      `;
+      }
+
+      function renderField(id, label, placeholder, value = "") {
+        return `
+        <label class="grid gap-2 text-xs font-extrabold uppercase tracking-[0.12em] text-[#f0ede8]/80">
+          ${label}
+          <input id="${id}" class="min-h-[46px] w-full border border-[#2a2a2a] bg-[#141414] px-4 py-3 text-[#f0ede8] outline-none focus:border-[#D4A017] focus:ring-2 focus:ring-[#D4A017]/20" type="text" placeholder="${placeholder}" value="${escapeHTML(value)}">
+        </label>
+      `;
+      }
+
+      function renderMediaEditModal() {
+        const item = mediaItems.find((entry) => entry.slot === mediaTargetSlot);
+        if (!item) return "";
+
+        return `
+        <div class="modal-backdrop fixed inset-0 z-[80] flex items-center justify-center bg-black/75 p-4">
+          <section class="w-full max-w-xl border border-[#2a2a2a] bg-[#141414] p-5 shadow-[0_32px_100px_rgba(0,0,0,.62)]" role="dialog" aria-modal="true" aria-label="Editar imagem do site">
+            <div class="mb-5 flex items-center justify-between gap-4">
+              <div>
+                <span class="text-xs font-black uppercase tracking-[0.12em] text-[#D4A017]">${escapeHTML(item.section)}</span>
+                <h2 class="font-['Bebas_Neue'] text-4xl leading-none tracking-[0.05em]">${escapeHTML(item.label)}</h2>
+              </div>
+              <button class="size-10 border border-[#2a2a2a] bg-[#0d0d0d] text-2xl leading-none text-[#f0ede8]" onclick="closeModal()" aria-label="Fechar modal">×</button>
+            </div>
+            <div class="mb-5 aspect-[16/9] overflow-hidden border border-[#2a2a2a] bg-[#0d0d0d]">
+              <img class="h-full w-full object-cover" src="${escapeHTML(item.imageUrl)}" alt="${escapeHTML(item.alt)}">
+            </div>
+            <div class="grid gap-4">
+              ${renderField("media-image", "URL da imagem", "Ex: assets/optimized/hero-main.webp", item.imageUrl)}
+              ${renderField("media-alt", "Texto alternativo", "Ex: Impressão Premium", item.alt)}
+            </div>
+            <div class="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-end">
+              <button class="${buttonClass("ghost")}" onclick="closeModal()">Cancelar</button>
+              <button class="${buttonClass("primary")}" onclick="updateMediaItem()">Salvar Imagem</button>
+            </div>
+          </section>
+        </div>
+      `;
+      }
+
+      function renderMediaResetModal() {
+        return `
+        <div class="modal-backdrop fixed inset-0 z-[80] flex items-center justify-center bg-black/75 p-4">
+          <section class="w-full max-w-xl border border-[#2a2a2a] bg-[#141414] p-5 shadow-[0_32px_100px_rgba(0,0,0,.62)]" role="dialog" aria-modal="true" aria-label="Resetar imagens do site">
+            <div class="mb-5 flex items-center justify-between gap-4">
+              <h2 class="font-['Bebas_Neue'] text-4xl leading-none tracking-[0.05em]">Resetar Imagens</h2>
+              <button class="size-10 border border-[#2a2a2a] bg-[#0d0d0d] text-2xl leading-none text-[#f0ede8]" onclick="closeModal()" aria-label="Fechar modal">×</button>
+            </div>
+            <p class="m-0 leading-7 text-[#f0ede8]/75">Isso restaura as imagens principais da landing para os caminhos originais usados no projeto.</p>
+            <div class="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-end">
+              <button class="${buttonClass("ghost")}" onclick="closeModal()">Cancelar</button>
+              <button class="${buttonClass("danger")}" onclick="confirmMediaReset()">Resetar Imagens</button>
+            </div>
+          </section>
+        </div>
+      `;
+      }
+
+      function renderStatusSelect(selectedStatus, label) {
+        return `
+        <label class="grid gap-2 text-xs font-extrabold uppercase tracking-[0.12em] text-[#f0ede8]/80">
+          ${label}
+          <select id="item-status" class="min-h-[46px] w-full border border-[#2a2a2a] bg-[#141414] px-4 py-3 text-[#f0ede8] outline-none focus:border-[#D4A017] focus:ring-2 focus:ring-[#D4A017]/20">
+            ${FLOW_STATUS.map((status) => `<option value="${status.key}" ${status.key === selectedStatus ? "selected" : ""}>${status.label}</option>`).join("")}
+          </select>
+        </label>
+      `;
+      }
+
+      function renderDeleteModal() {
+        const item = items.find((entry) => entry.id === deleteTargetId);
+        const title = item ? item.title : "este item";
+
+        return `
+        <div class="modal-backdrop fixed inset-0 z-[80] flex items-center justify-center bg-black/75 p-4">
+          <section class="w-full max-w-xl border border-[#2a2a2a] bg-[#141414] p-5 shadow-[0_32px_100px_rgba(0,0,0,.62)]" role="dialog" aria-modal="true" aria-label="Confirmar remoção">
+            <div class="mb-5 flex items-center justify-between gap-4">
+              <h2 class="font-['Bebas_Neue'] text-4xl leading-none tracking-[0.05em]">Confirmar Remoção</h2>
+              <button class="size-10 border border-[#2a2a2a] bg-[#0d0d0d] text-2xl leading-none text-[#f0ede8]" onclick="closeModal()" aria-label="Fechar modal">×</button>
+            </div>
+            <p class="m-0 leading-7 text-[#f0ede8]/75">Tem certeza que deseja remover <strong class="text-[#f0ede8]">${escapeHTML(title)}</strong>? Esta ação tira o item do painel atual.</p>
+            <div class="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-end">
+              <button class="${buttonClass("ghost")}" onclick="closeModal()">Cancelar</button>
+              <button class="${buttonClass("danger")}" onclick="confirmDelete()">Remover Item</button>
+            </div>
+          </section>
+        </div>
+      `;
+      }
+
+      function renderResetModal() {
+        return `
+        <div class="modal-backdrop fixed inset-0 z-[80] flex items-center justify-center bg-black/75 p-4">
+          <section class="w-full max-w-xl border border-[#2a2a2a] bg-[#141414] p-5 shadow-[0_32px_100px_rgba(0,0,0,.62)]" role="dialog" aria-modal="true" aria-label="Resetar dados da demo">
+            <div class="mb-5 flex items-center justify-between gap-4">
+              <h2 class="font-['Bebas_Neue'] text-4xl leading-none tracking-[0.05em]">Resetar Demo</h2>
+              <button class="size-10 border border-[#2a2a2a] bg-[#0d0d0d] text-2xl leading-none text-[#f0ede8]" onclick="closeModal()" aria-label="Fechar modal">×</button>
+            </div>
+            <p class="m-0 leading-7 text-[#f0ede8]/75">Isso restaura os 6 trabalhos iniciais e remove alterações feitas durante a apresentação atual.</p>
+            <div class="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-end">
+              <button class="${buttonClass("ghost")}" onclick="closeModal()">Cancelar</button>
+              <button class="${buttonClass("danger")}" onclick="confirmReset()">Resetar Dados</button>
+            </div>
+          </section>
+        </div>
+      `;
+      }
+
+      function renderToasts() {
+        return `
+        <div class="fixed bottom-5 right-5 z-[120] grid w-[min(360px,calc(100vw-40px))] gap-2" aria-live="polite" aria-atomic="true">
+          ${toasts
+            .map(
+              (toast) => `
+            <div class="toast-enter border border-[#2a2a2a] border-l-4 bg-[#141414] p-4 font-extrabold text-[#f0ede8] shadow-[0_18px_50px_rgba(0,0,0,.45)] ${toast.type === "success" ? "border-l-[#4CAF82]" : toast.type === "danger" ? "border-l-[#e05555]" : "border-l-[#D4A017]"}">
+              ${escapeHTML(toast.message)}
+            </div>
+          `,
+            )
+            .join("")}
+        </div>
+      `;
+      }
+
+      function render() {
+        app.innerHTML = isLoggedIn ? renderLayout() : renderLogin();
+      }
+
+      window.addEventListener("storage", (event) => {
+        if (event.key === PortfolioStore.STORAGE_KEY) {
+          items = PortfolioStore.getItems();
+          render();
+          return;
+        }
+
+        if (event.key === SiteMediaStore.STORAGE_KEY) {
+          mediaItems = SiteMediaStore.getMedia();
+          render();
+        }
+      });
+
+      render();
+    </script>
+  </body>
+</html>

@@ -7,26 +7,19 @@
     <link rel="icon" type="image/svg+xml" href="images/favicon.svg">    
     <meta name="description" content="ArtPress – Soluções completas em impressão, identidade visual e comunicação para empresas modernas." />
     
-    <!-- Tailwind via CDN with Plugins -->
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Manrope:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <link rel="preload" as="image" href="assets/optimized/hero-main.webp" type="image/webp" fetchpriority="high" />
     
-    <!-- Conf e Estilos -->
-    <script src="js/tailwind-config.js"></script>
+    <!-- Estilos -->
+    <link rel="stylesheet" href="css/tailwind.build.css" />
     <link rel="stylesheet" href="css/style.css" />
 </head>
-<body class="bg-surface text-on-surface font-body selection:bg-primary-container selection:text-on-primary-container overflow-hidden">
+<body class="bg-surface text-on-surface font-body selection:bg-primary-container selection:text-on-primary-container">
     
-    <!-- GSAP / MorphSVG Libraries -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
-    <script src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/16327/MorphSVGPlugin3.min.js"></script>
-
     <!-- GSAP Preloader -->
     <div id="preloader" class="fixed inset-0 z-[999999] bg-[#0e100f] flex items-center justify-center transition-opacity duration-[800ms]">
         <div class="relative w-full h-full flex flex-col items-center justify-center gap-12">
@@ -116,7 +109,7 @@
                         Soluções completas em impressão, identidade visual e comunicação visual para empresas modernas.
                     </p>
                     
-                    <div class="flex flex-col sm:flex-row gap-6">
+                    <div data-hero-actions class="flex flex-col sm:flex-row gap-6">
                         <a href="#contact" class="relative inline-flex items-center justify-center gap-3 px-10 py-5 rounded-xl font-headline font-black uppercase tracking-widest text-[#131313] bg-gradient-to-r from-[#FF6B00] via-[#FF8C33] to-[#FFB693] shadow-[0_0_30px_rgba(255,107,0,0.4)] hover:shadow-[0_0_60px_rgba(255,107,0,0.7)] transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 overflow-hidden group">
                             <span class="relative z-10">Solicitar Orçamento</span>
                             <!-- Shine sweep effect -->
@@ -130,7 +123,7 @@
                 
                 <div class="md:col-span-4 lg:col-span-5 relative">
                     <div class="aspect-[4/5] bg-surface-container rounded-lg overflow-hidden relative shadow-2xl group">
-                        <img src="images/foto 7.png" alt="Impressão Premium" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" loading="eager">
+                        <img data-media-slot="hero.main" src="assets/optimized/hero-main.webp" alt="Impressão Premium" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" loading="eager" fetchpriority="high" decoding="async">
                         <div class="absolute inset-0 bg-gradient-to-t from-surface via-transparent to-transparent"></div>
                         <div class="absolute bottom-6 left-6 right-6 p-6 bg-surface/80 glass-nav rounded-md">
                             <div class="flex items-center justify-between mb-4">
@@ -170,7 +163,7 @@
                     <!-- S1: Impressão Digital -->
                     <div class="md:col-span-8 relative rounded-xl overflow-hidden min-h-[320px] border border-outline-variant/20 hover:border-primary-container/50 transition-colors group shadow-2xl">
                         <div class="absolute inset-0 z-0">
-                            <img src="img/Impressão Digital.png" alt="Impressão Digital" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                            <img data-media-slot="services.digital" src="assets/optimized/service-digital.webp" alt="Impressão Digital" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy" decoding="async">
                             <div class="absolute inset-0 bg-gradient-to-t from-[#131313] via-[#131313]/70 to-[#131313]/20"></div>
                         </div>
                         <div class="relative z-10 p-8 h-full flex flex-col items-center justify-center text-center">
@@ -182,7 +175,7 @@
                     <!-- S2: Banners e Faixas -->
                     <div class="md:col-span-4 relative rounded-xl overflow-hidden min-h-[320px] border border-outline-variant/20 hover:border-secondary-container/50 transition-colors group shadow-2xl">
                         <div class="absolute inset-0 z-0">
-                            <img src="img/Banners e Faixas.png" alt="Banners e Faixas" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                            <img data-media-slot="services.banners" src="assets/optimized/service-banners.webp" alt="Banners e Faixas" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy" decoding="async">
                             <div class="absolute inset-0 bg-gradient-to-t from-[#131313] via-[#131313]/70 to-[#131313]/20"></div>
                         </div>
                         <div class="relative z-10 p-8 h-full flex flex-col items-center justify-center text-center">
@@ -194,7 +187,7 @@
                     <!-- S3: Cartões de Visita -->
                     <div class="md:col-span-6 relative rounded-xl overflow-hidden min-h-[320px] border border-outline-variant/20 hover:border-tertiary/50 transition-colors group shadow-2xl">
                         <div class="absolute inset-0 z-0">
-                            <img src="img/Cartões de Visita.png" alt="Cartões de Visita" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                            <img data-media-slot="services.cards" src="assets/optimized/service-cards.webp" alt="Cartões de Visita" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy" decoding="async">
                             <div class="absolute inset-0 bg-gradient-to-t from-[#131313] via-[#131313]/70 to-[#131313]/20"></div>
                         </div>
                         <div class="relative z-10 p-8 h-full flex flex-col items-center justify-center text-center">
@@ -208,7 +201,7 @@
                     <!-- S4: Embalagens Personalizadas -->
                     <div class="md:col-span-6 relative rounded-xl overflow-hidden min-h-[320px] border border-outline-variant/20 hover:border-primary-container/50 transition-colors group shadow-2xl">
                         <div class="absolute inset-0 z-0">
-                            <img src="img/Embalagens Personalizadas.png" alt="Embalagens Personalizadas" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                            <img data-media-slot="services.packaging" src="assets/optimized/service-packaging.webp" alt="Embalagens Personalizadas" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy" decoding="async">
                             <div class="absolute inset-0 bg-gradient-to-t from-[#131313] via-[#131313]/70 to-[#131313]/20"></div>
                         </div>
                         <div class="relative z-10 p-8 h-full flex flex-col items-center justify-center text-center">
@@ -222,7 +215,7 @@
                     <!-- S5: Fachadas e C. Visual (formerly S7, now spans 12 cols) -->
                     <div class="md:col-span-12 relative rounded-xl overflow-hidden min-h-[380px] border border-outline-variant/20 hover:border-primary/50 transition-colors group shadow-2xl">
                         <div class="absolute inset-0 z-0">
-                            <img src="img/Fachadas & C. Visual.png" alt="Fachadas & C. Visual" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                            <img data-media-slot="services.facades" src="assets/optimized/service-facades.webp" alt="Fachadas & C. Visual" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy" decoding="async">
                             <div class="absolute inset-0 bg-gradient-to-r from-[#131313] via-[#131313]/80 to-transparent"></div>
                             <div class="absolute inset-0 bg-gradient-to-t from-[#131313] via-[#131313]/30 to-transparent md:hidden"></div>
                         </div>
@@ -255,11 +248,11 @@
                     <p class="text-on-surface-variant max-w-xl font-body">Confira como ajudamos marcas exigentes a extrair o melhor da comunicação impressa.</p>
                 </div>
                 <!-- 6 Items -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div id="portfolio-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                     <!-- P1 -->
                     <div class="group cursor-pointer">
                         <div class="aspect-[4/3] bg-surface-container rounded-xl overflow-hidden mb-5 border border-outline-variant/10 relative shadow-lg">
-                            <img src="images/foto 1.png" alt="Identidade Visual" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy">
+                            <img src="assets/optimized/portfolio-1.webp" alt="Identidade Visual" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy" decoding="async">
                             <div class="absolute inset-0 bg-gradient-to-t from-[#131313] via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                         </div>
                         <h4 class="font-headline font-bold text-xl mb-1 text-on-surface group-hover:text-primary-container transition-colors">Identidade Visual Restaurante</h4>
@@ -268,7 +261,7 @@
                     <!-- P2 -->
                     <div class="group cursor-pointer">
                         <div class="aspect-[4/3] bg-surface-container rounded-xl overflow-hidden mb-5 border border-outline-variant/10 relative shadow-lg">
-                            <img src="images/foto 2.png" alt="Banner Clínica" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy">
+                            <img src="assets/optimized/portfolio-2.webp" alt="Banner Clínica" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy" decoding="async">
                             <div class="absolute inset-0 bg-gradient-to-t from-[#131313] via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                         </div>
                         <h4 class="font-headline font-bold text-xl mb-1 text-on-surface group-hover:text-primary-container transition-colors">Banner Clínica Médica</h4>
@@ -277,7 +270,7 @@
                     <!-- P3 -->
                     <div class="group cursor-pointer">
                         <div class="aspect-[4/3] bg-surface-container rounded-xl overflow-hidden mb-5 border border-outline-variant/10 relative shadow-lg">
-                            <img src="images/foto 3.png" alt="Embalagem Produto" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy">
+                            <img src="assets/optimized/portfolio-3.webp" alt="Embalagem Produto" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy" decoding="async">
                             <div class="absolute inset-0 bg-gradient-to-t from-[#131313] via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                         </div>
                         <h4 class="font-headline font-bold text-xl mb-1 text-on-surface group-hover:text-primary-container transition-colors">Embalagem Produto Orgânico</h4>
@@ -286,7 +279,7 @@
                     <!-- P4 -->
                     <div class="group cursor-pointer">
                         <div class="aspect-[4/3] bg-surface-container rounded-xl overflow-hidden mb-5 border border-outline-variant/10 relative shadow-lg">
-                            <img src="images/foto 4.png" alt="Catálogo Moda" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy">
+                            <img src="assets/optimized/portfolio-4.webp" alt="Catálogo Moda" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy" decoding="async">
                             <div class="absolute inset-0 bg-gradient-to-t from-[#131313] via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                         </div>
                         <h4 class="font-headline font-bold text-xl mb-1 text-on-surface group-hover:text-primary-container transition-colors">Catálogo de Moda</h4>
@@ -295,7 +288,7 @@
                     <!-- P5 -->
                     <div class="group cursor-pointer">
                         <div class="aspect-[4/3] bg-surface-container rounded-xl overflow-hidden mb-5 border border-outline-variant/10 relative shadow-lg">
-                            <img src="images/foto 5.png" alt="Uniformes" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy">
+                            <img src="assets/optimized/portfolio-5.webp" alt="Uniformes" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy" decoding="async">
                             <div class="absolute inset-0 bg-gradient-to-t from-[#131313] via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                         </div>
                         <h4 class="font-headline font-bold text-xl mb-1 text-on-surface group-hover:text-primary-container transition-colors">Arte Gráfica</h4>
@@ -304,7 +297,7 @@
                     <!-- P6 -->
                     <div class="group cursor-pointer">
                         <div class="aspect-[4/3] bg-surface-container rounded-xl overflow-hidden mb-5 border border-outline-variant/10 relative shadow-lg">
-                            <img src="images/foto 6.png" alt="Papelaria Corporativa" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy">
+                            <img src="assets/optimized/portfolio-6.webp" alt="Papelaria Corporativa" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy" decoding="async">
                             <div class="absolute inset-0 bg-gradient-to-t from-[#131313] via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                         </div>
                         <h4 class="font-headline font-bold text-xl mb-1 text-on-surface group-hover:text-primary-container transition-colors">Papelaria Corporativa</h4>
@@ -368,7 +361,7 @@
                     
                     <div class="md:w-1/2 w-full aspect-square md:aspect-auto md:h-[500px] border border-outline-variant/20 rounded-xl overflow-hidden relative group shadow-2xl">
                         <div class="absolute inset-0 z-0">
-                            <img src="images/foto 5.png" alt="Tecnologia e Criatividade" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+                            <img data-media-slot="about.main" src="assets/optimized/about-main.webp" alt="Tecnologia e Criatividade" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" loading="lazy" decoding="async">
                             <div class="absolute inset-0 bg-gradient-to-t from-[#131313] via-[#131313]/60 to-[#131313]/20"></div>
                         </div>
                         <div class="w-full h-full flex flex-col items-center justify-end p-8 md:p-12 relative z-10 text-center">
@@ -575,24 +568,24 @@
                 
                 <!-- Avatar iSousadev -->
                 <a href="https://github.com/iSousadev" target="_blank" class="w-14 h-14 rounded-2xl border border-white/10 bg-white/5 p-1 shadow-lg hover:scale-[1.05] hover:bg-white/10 transition-all backdrop-blur-sm group">
-                    <img src="https://avatars.githubusercontent.com/u/168583881?v=4&t=new" alt="iSousadev" class="w-full h-full object-cover rounded-xl group-hover:opacity-90">
+                    <img src="https://avatars.githubusercontent.com/u/168583881?v=4&t=new" alt="iSousadev" class="w-full h-full object-cover rounded-xl group-hover:opacity-90" loading="lazy" decoding="async">
                 </a>
                 
                 <!-- Avatar Espakki -->
                 <a href="https://github.com/Espakki" target="_blank" class="w-14 h-14 rounded-2xl border border-white/10 bg-white/5 p-1 shadow-lg hover:scale-[1.05] hover:bg-white/10 transition-all backdrop-blur-sm group hover:-translate-y-1 relative" title="Espakki">
-                    <img src="https://github.com/Espakki.png" alt="Espakki" class="w-full h-full object-cover rounded-xl group-hover:opacity-90">
+                    <img src="https://github.com/Espakki.png" alt="Espakki" class="w-full h-full object-cover rounded-xl group-hover:opacity-90" loading="lazy" decoding="async">
                 </a>
                 <!-- Avatar camscostney -->
                 <a href="https://github.com/camscostney" target="_blank" class="w-14 h-14 rounded-2xl border border-white/10 bg-white/5 p-1 shadow-lg hover:scale-[1.05] hover:bg-white/10 transition-all backdrop-blur-sm group hover:-translate-y-1 relative" title="camscostney">
-                    <img src="https://github.com/camscostney.png" alt="camscostney" class="w-full h-full object-cover rounded-xl group-hover:opacity-90">
+                    <img src="https://github.com/camscostney.png" alt="camscostney" class="w-full h-full object-cover rounded-xl group-hover:opacity-90" loading="lazy" decoding="async">
                 </a>
                 <!-- Avatar KaiqueCh -->
                 <a href="https://github.com/KaiqueCh" target="_blank" class="w-14 h-14 rounded-2xl border border-white/10 bg-white/5 p-1 shadow-lg hover:scale-[1.05] hover:bg-white/10 transition-all backdrop-blur-sm group hover:-translate-y-1 relative" title="KaiqueCh">
-                    <img src="https://github.com/KaiqueCh.png" alt="KaiqueCh" class="w-full h-full object-cover rounded-xl group-hover:opacity-90">
+                    <img src="https://github.com/KaiqueCh.png" alt="KaiqueCh" class="w-full h-full object-cover rounded-xl group-hover:opacity-90" loading="lazy" decoding="async">
                 </a>
                 <!-- Avatar maria-ramos652 -->
                 <a href="https://github.com/maria-ramos652" target="_blank" class="w-14 h-14 rounded-2xl border border-white/10 bg-white/5 p-1 shadow-lg hover:scale-[1.05] hover:bg-white/10 transition-all backdrop-blur-sm group hover:-translate-y-1 relative" title="maria-ramos652">
-                    <img src="https://github.com/maria-ramos652.png" alt="maria-ramos652" class="w-full h-full object-cover rounded-xl group-hover:opacity-90">
+                    <img src="https://github.com/maria-ramos652.png" alt="maria-ramos652" class="w-full h-full object-cover rounded-xl group-hover:opacity-90" loading="lazy" decoding="async">
                 </a>
                 
 
@@ -606,6 +599,8 @@
     </footer>
     
     <!-- Scripts -->
+    <script src="js/portfolio-store.js"></script>
+    <script src="js/site-media-store.js"></script>
     <script src="js/script.js"></script>
 </body>
 </html>

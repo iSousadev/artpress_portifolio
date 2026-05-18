@@ -1,0 +1,17 @@
+{
+  "name": "artpress-portfolio",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build:css": "tailwindcss -c tailwind.config.cjs -i ./portfolio/css/tailwind.input.css -o ./portfolio/css/tailwind.build.css --minify",
+    "dev:css": "tailwindcss -c tailwind.config.cjs -i ./portfolio/css/tailwind.input.css -o ./portfolio/css/tailwind.build.css --watch",
+    "optimize:images": "node scripts/optimize-images.mjs",
+    "build": "npm run optimize:images && npm run build:css"
+  },
+  "devDependencies": {
+    "@tailwindcss/container-queries": "^0.1.1",
+    "@tailwindcss/forms": "^0.5.10",
+    "sharp": "^0.33.5",
+    "tailwindcss": "^3.4.17"
+  }
+}

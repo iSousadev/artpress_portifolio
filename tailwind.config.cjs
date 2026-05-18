@@ -1,8 +1,6 @@
-/* ============================================================
-   ArtPress – Tailwind CSS configuração personalizada para o projeto
-   ============================================================ */
-tailwind.config = {
+module.exports = {
   darkMode: "class",
+  content: ["./portfolio/**/*.{html,js}"],
   theme: {
     extend: {
       colors: {
@@ -67,4 +65,8 @@ tailwind.config = {
       },
     },
   },
+  plugins: [
+    require("@tailwindcss/forms"),
+    require("@tailwindcss/container-queries"),
+  ],
 };

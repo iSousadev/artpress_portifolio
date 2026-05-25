@@ -14,6 +14,7 @@
     <link rel="stylesheet" href="css/tailwind.build.css" />
     <script src="js/portfolio-store.js"></script>
     <script src="js/site-media-store.js"></script>
+    <script src="js/theme-store.js"></script>
     <style>
       .beta-stripes {
         background-image:
@@ -69,8 +70,10 @@
       let toastId = 0;
       const PortfolioStore = window.ArtPressPortfolioStore;
       const SiteMediaStore = window.ArtPressSiteMediaStore;
+      const ThemeStore = window.ArtPressThemeStore;
       let items = PortfolioStore.getItems();
       let mediaItems = SiteMediaStore.getMedia();
+      let activeTheme = ThemeStore.getTheme();
 
       const app = document.getElementById("app");
 
@@ -169,6 +172,7 @@
         const tabLabels = {
           portfolio: "Gestão de Portfólio.",
           media: "Imagens do Site.",
+          themes: "Temas do Site.",
           agile: "Fluxo Agile.",
         };
         // addToast(tabLabels[tab] || "Aba administrativa aberta.", "default");
@@ -377,6 +381,28 @@
         mediaItems = SiteMediaStore.saveMedia(mediaItems);
       }
 
+      function getThemeMeta(themeKey = activeTheme) {
+        return (
+          ThemeStore.THEMES.find((theme) => theme.key === themeKey) ||
+          ThemeStore.THEMES[0]
+        );
+      }
+
+      function applyTheme(themeKey) {
+        activeTheme = ThemeStore.saveTheme(themeKey);
+        addToast(
+          getThemeMeta(activeTheme).label + " aplicado ao site.",
+          "success",
+        );
+        render();
+      }
+
+      function resetSiteTheme() {
+        activeTheme = ThemeStore.resetTheme();
+        addToast("Tema padrão restaurado.", "success");
+        render();
+      }
+
       function renderLogin() {
         return `
         <main class="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top_right,rgba(212,160,23,.14),transparent_34rem)] p-6 md:p-8">
@@ -390,14 +416,14 @@
             <div class="flex flex-col justify-center gap-5 border border-[#1e1e1e] bg-[#0d0d0d] p-6 md:p-8">
               <label class="grid gap-2 text-xs font-extrabold uppercase tracking-[0.12em] text-[#f0ede8]/80">
                 Usuário
-                <input id="login-user" class="min-h-[46px] w-full border border-[#2a2a2a] bg-[#141414] px-4 py-3 text-[#f0ede8] outline-none focus:border-[#D4A017] focus:ring-2 focus:ring-[#D4A017]/20" type="text" placeholder="admin" autocomplete="username">
+                <input id="login-user" class="min-h-[46px] w-full border border-[#2a2a2a] bg-[#141414] px-4 py-3 text-[#f0ede8] outline-none focus:border-[#D4A017] focus:ring-2 focus:ring-[#D4A017]/20" type="text" placeholder="Login" autocomplete="username">
               </label>
               <label class="grid gap-2 text-xs font-extrabold uppercase tracking-[0.12em] text-[#f0ede8]/80">
                 Senha
-                <input id="login-password" class="min-h-[46px] w-full border border-[#2a2a2a] bg-[#141414] px-4 py-3 text-[#f0ede8] outline-none focus:border-[#D4A017] focus:ring-2 focus:ring-[#D4A017]/20" type="password" placeholder="artpress" autocomplete="current-password">
+                <input id="login-password" class="min-h-[46px] w-full border border-[#2a2a2a] bg-[#141414] px-4 py-3 text-[#f0ede8] outline-none focus:border-[#D4A017] focus:ring-2 focus:ring-[#D4A017]/20" type="password" placeholder="Senha" autocomplete="current-password">
               </label>
               <button class="${buttonClass("primary")} w-full" onclick="handleLogin()">Entrar</button>
-              <p class="m-0 text-sm text-[#888]">Credenciais fixas: admin / artpress</p>
+      
             </div>
           </section>
         </main>
@@ -411,9 +437,10 @@
           <aside class="border-b border-[#1e1e1e] bg-[#141414] p-6 lg:sticky lg:top-0 lg:min-h-screen lg:border-b-0 lg:border-r lg:p-7">
             <div class="font-['Bebas_Neue'] text-5xl leading-none tracking-[0.06em] text-[#D4A017]"><span class="text-[#f0ede8]">ART</span>PRESS</div>
           
-            <nav class="mt-8 grid gap-2 sm:grid-cols-3 lg:grid-cols-1" aria-label="Navegação administrativa">
+            <nav class="mt-8 grid gap-2 sm:grid-cols-2 lg:grid-cols-1" aria-label="Navegação administrativa">
               <button class="min-h-[50px] border px-4 py-6 text-left font-extrabold ${activeTab === "portfolio" ? "border-[#D4A017] bg-[#D4A017] text-[#0d0d0d]" : "border-[#1e1e1e] bg-[#0d0d0d] text-[#f0ede8]/75 hover:border-[#D4A017] hover:text-[#D4A017]"}" onclick="setTab('portfolio')">Gestão de Portfólio</button>
               <button class="min-h-[50px] border px-4 py-3 text-left font-extrabold ${activeTab === "media" ? "border-[#D4A017] bg-[#D4A017] text-[#0d0d0d]" : "border-[#1e1e1e] bg-[#0d0d0d] text-[#f0ede8]/75 hover:border-[#D4A017] hover:text-[#D4A017]"}" onclick="setTab('media')">Imagens do Site</button>
+              <button class="min-h-[50px] border px-4 py-3 text-left font-extrabold ${activeTab === "themes" ? "border-[#D4A017] bg-[#D4A017] text-[#0d0d0d]" : "border-[#1e1e1e] bg-[#0d0d0d] text-[#f0ede8]/75 hover:border-[#D4A017] hover:text-[#D4A017]"}" onclick="setTab('themes')">Temas do Site</button>
               <button class="min-h-[50px] border px-4 py-3 text-left font-extrabold ${activeTab === "agile" ? "border-[#D4A017] bg-[#D4A017] text-[#0d0d0d]" : "border-[#1e1e1e] bg-[#0d0d0d] text-[#f0ede8]/75 hover:border-[#D4A017] hover:text-[#D4A017]"}" onclick="setTab('agile')">Fluxo Agile</button>
             </nav>
           </aside>
@@ -439,12 +466,14 @@
 
       function getActiveTabTitle() {
         if (activeTab === "media") return "Imagens do Site";
+        if (activeTab === "themes") return "Temas do Site";
         if (activeTab === "agile") return "Fluxo Agile";
         return "Gestão de Portfólio";
       }
 
       function renderActivePanel() {
         if (activeTab === "media") return renderMediaPanel();
+        if (activeTab === "themes") return renderThemesPanel();
         if (activeTab === "agile") return renderAgilePanel();
         return renderPortfolioPanel();
       }
@@ -571,6 +600,79 @@
               <p class="mt-1 text-sm leading-5 text-[#f0ede8]/60">${escapeHTML(item.alt)}</p>
             </div>
             <button class="${buttonClass("primary")} !min-h-[36px] !px-3 !py-2 !text-[0.7rem]" onclick="openMediaEditModal('${escapeHTML(item.slot)}')">Editar Imagem</button>
+          </div>
+        </article>
+      `;
+      }
+
+      function renderThemesPanel() {
+        return `
+        <section class="grid gap-5 border border-[#1e1e1e] bg-[#141414] p-4 md:p-5">
+          <div class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+            <div>
+              <h2 class="font-['Bebas_Neue'] text-[clamp(2rem,4vw,3.4rem)] leading-none tracking-[0.05em]">Temas sazonais da landing</h2>
+              <p class="mt-2 max-w-3xl text-sm leading-6 text-[#f0ede8]/65">Ative campanhas visuais por data especial sem alterar os dados do portfólio, imagens principais ou fluxo Agile.</p>
+            </div>
+            <button class="${buttonClass("ghost")}" onclick="resetSiteTheme()">Resetar Tema</button>
+          </div>
+
+          <div class="grid gap-4 lg:grid-cols-2">
+            ${ThemeStore.THEMES.map((theme) => renderThemeCard(theme)).join("")}
+          </div>
+        </section>
+      `;
+      }
+
+      function renderThemeCard(theme) {
+        const isActive = activeTheme === theme.key;
+        const isChristmas = theme.key === "christmas";
+        const previewClass = isChristmas
+          ? "bg-[radial-gradient(circle_at_18%_18%,rgba(242,196,109,.32),transparent_8rem),radial-gradient(circle_at_82%_8%,rgba(196,32,48,.34),transparent_10rem),radial-gradient(circle_at_52%_100%,rgba(47,125,70,.24),transparent_10rem),linear-gradient(135deg,#07150f,#1a0d12)]"
+          : "bg-[radial-gradient(circle_at_20%_18%,rgba(212,160,23,.24),transparent_9rem),linear-gradient(135deg,#0d0d0d,#1a1a1a)]";
+        const accentClass = isChristmas ? "bg-[#c42030]" : "bg-[#D4A017]";
+        const secondaryClass = isChristmas ? "bg-[#2f7d46]" : "bg-[#2a2a2a]";
+
+        return `
+        <article class="overflow-hidden border ${isActive ? "border-[#D4A017]" : "border-[#2a2a2a]"} bg-[#0d0d0d] shadow-[0_20px_60px_rgba(0,0,0,.22)]">
+          <div class="relative min-h-[190px] overflow-hidden ${previewClass} p-5">
+            ${
+              isChristmas
+                ? `
+            <div class="pointer-events-none absolute inset-0 opacity-75">
+              <span class="absolute inset-4 border border-[#f2c46d]/25 shadow-[inset_0_0_28px_rgba(242,196,109,.08)]"></span>
+              <span class="absolute left-[12%] top-[18%] size-1 rounded-full bg-white/80 shadow-[0_0_12px_rgba(255,255,255,.65)]"></span>
+              <span class="absolute left-[28%] top-[42%] size-1.5 rounded-full bg-[#f2c46d]/80 shadow-[0_0_14px_rgba(242,196,109,.55)]"></span>
+              <span class="absolute left-[52%] top-[24%] size-1 rounded-full bg-white/70 shadow-[0_0_10px_rgba(255,255,255,.5)]"></span>
+              <span class="absolute right-[18%] top-[36%] size-2 rounded-full bg-white/60 shadow-[0_0_16px_rgba(255,255,255,.45)]"></span>
+              <span class="absolute right-[34%] bottom-[24%] size-1 rounded-full bg-[#f2c46d]/75 shadow-[0_0_12px_rgba(242,196,109,.5)]"></span>
+              <span class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#f2c46d]/40 to-transparent"></span>
+              <span class="absolute inset-x-6 bottom-7 h-px bg-gradient-to-r from-[#c42030]/0 via-[#2f7d46]/55 to-[#f2c46d]/0"></span>
+              <span class="absolute bottom-5 right-5 h-12 w-12 rounded-full border border-[#f2c46d]/25 bg-[radial-gradient(circle,rgba(242,196,109,.28),transparent_62%)]"></span>
+            </div>
+            `
+                : ""
+            }
+            <div class="absolute right-5 top-5 grid grid-cols-3 gap-2 opacity-85">
+              <span class="size-2 rounded-full bg-[#f0ede8]/80"></span>
+              <span class="size-2 rounded-full ${accentClass}"></span>
+              <span class="size-2 rounded-full bg-[#f2c46d]"></span>
+              <span class="size-2 rounded-full ${secondaryClass}"></span>
+              <span class="size-2 rounded-full bg-[#f0ede8]/50"></span>
+              <span class="size-2 rounded-full ${accentClass}"></span>
+            </div>
+            <div class="relative z-10 flex h-full min-h-[150px] flex-col justify-end">
+              <span class="mb-3 inline-flex w-fit border border-[#f0ede8]/20 bg-black/35 px-3 py-1 text-[0.68rem] font-black uppercase tracking-[0.14em] text-[#f0ede8]/80">${isActive ? "Ativo agora" : "Disponível"}</span>
+              <strong class="font-['Bebas_Neue'] text-5xl font-normal leading-none tracking-[0.05em] text-[#f0ede8]">${escapeHTML(theme.label)}</strong>
+              <div class="mt-4 flex gap-2">
+                <span class="h-1.5 w-16 ${accentClass}"></span>
+                <span class="h-1.5 w-10 bg-[#f2c46d]"></span>
+                <span class="h-1.5 w-7 ${secondaryClass}"></span>
+              </div>
+            </div>
+          </div>
+          <div class="grid gap-4 p-4">
+            <p class="min-h-[44px] text-sm leading-6 text-[#f0ede8]/65">${escapeHTML(theme.description)}</p>
+            <button class="${buttonClass(isActive ? "ghost" : "primary")}" onclick="applyTheme('${theme.key}')">${isActive ? "Tema Ativo" : "Aplicar Tema"}</button>
           </div>
         </article>
       `;
@@ -854,6 +956,12 @@
 
         if (event.key === SiteMediaStore.STORAGE_KEY) {
           mediaItems = SiteMediaStore.getMedia();
+          render();
+          return;
+        }
+
+        if (event.key === ThemeStore.STORAGE_KEY) {
+          activeTheme = ThemeStore.getTheme();
           render();
         }
       });

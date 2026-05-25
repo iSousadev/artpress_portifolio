@@ -66,6 +66,337 @@
 }
 
 /* ============================================================
+   Seasonal theme: Christmas
+   ============================================================ */
+html[data-site-theme="christmas"] body {
+    background:
+        radial-gradient(circle at top left, rgba(196, 32, 48, 0.2), transparent 34rem),
+        radial-gradient(circle at 85% 12%, rgba(242, 196, 109, 0.14), transparent 28rem),
+        radial-gradient(circle at 52% 42%, rgba(47, 125, 70, 0.08), transparent 36rem),
+        #07130d;
+}
+
+html[data-site-theme="christmas"] body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 45;
+    pointer-events: none;
+    background-image:
+        radial-gradient(circle, rgba(255, 255, 255, 0.2) 1px, transparent 1.5px),
+        radial-gradient(circle, rgba(242, 196, 109, 0.16) 1px, transparent 1.8px),
+        linear-gradient(120deg, rgba(196, 32, 48, 0.06), transparent 36%, rgba(47, 125, 70, 0.08));
+    background-position: 0 0, 18px 20px, 0 0;
+    background-size: 38px 38px, 64px 64px, auto;
+    mix-blend-mode: screen;
+    opacity: 0.22;
+}
+
+html[data-site-theme="christmas"] body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 44;
+    pointer-events: none;
+    background:
+        linear-gradient(90deg, rgba(242, 196, 109, 0.08), transparent 20%, rgba(196, 32, 48, 0.08), transparent 52%, rgba(47, 125, 70, 0.08)),
+        repeating-linear-gradient(115deg, rgba(242, 196, 109, 0.035) 0 1px, transparent 1px 48px);
+    opacity: 0.55;
+}
+
+#christmas-particles {
+    position: fixed;
+    inset: 0;
+    z-index: 46;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    mix-blend-mode: screen;
+    opacity: 0.72;
+}
+
+html[data-site-theme="christmas"] .bg-surface {
+    background-color: #07130d !important;
+}
+
+html[data-site-theme="christmas"] .bg-surface-container-low {
+    background-color: #0b1a12 !important;
+}
+
+html[data-site-theme="christmas"] .bg-surface-container,
+html[data-site-theme="christmas"] .bg-surface-container-high {
+    background-color: #102018 !important;
+}
+
+html[data-site-theme="christmas"] .bg-surface-container-highest {
+    background-color: #17251b !important;
+}
+
+html[data-site-theme="christmas"] .text-primary,
+html[data-site-theme="christmas"] .text-primary-container {
+    color: #f2c46d !important;
+}
+
+html[data-site-theme="christmas"] .text-secondary-container {
+    color: #c42030 !important;
+}
+
+html[data-site-theme="christmas"] .text-on-surface-variant {
+    color: #d9c8b1 !important;
+}
+
+html[data-site-theme="christmas"] [class*="border-outline-variant"] {
+    border-color: rgba(242, 196, 109, 0.2) !important;
+}
+
+html[data-site-theme="christmas"] [class*="hover:border-primary"]:hover,
+html[data-site-theme="christmas"] [class*="hover:border-secondary"]:hover,
+html[data-site-theme="christmas"] [class*="hover:border-tertiary"]:hover {
+    border-color: rgba(242, 196, 109, 0.55) !important;
+}
+
+html[data-site-theme="christmas"] [class*="from-[#FF6B00]"] {
+    --tw-gradient-from: #b91c1c var(--tw-gradient-from-position);
+    --tw-gradient-to: #f2c46d var(--tw-gradient-to-position);
+    --tw-gradient-stops: var(--tw-gradient-from), #2f7d46, var(--tw-gradient-to);
+}
+
+html[data-site-theme="christmas"] .ink-gradient {
+    background: linear-gradient(135deg, #b91c1c 0%, #2f7d46 52%, #f2c46d 100%) !important;
+}
+
+html[data-site-theme="christmas"] .glass-nav {
+    background-color: rgba(7, 19, 13, 0.76) !important;
+    border-color: rgba(242, 196, 109, 0.18) !important;
+    box-shadow: 0 18px 55px rgba(0, 0, 0, 0.28), inset 0 0 26px rgba(242, 196, 109, 0.05);
+}
+
+html[data-site-theme="christmas"] nav.glass-nav {
+    border-color: rgba(242, 196, 109, 0.22) !important;
+    box-shadow:
+        0 24px 70px rgba(0, 0, 0, 0.4),
+        inset 0 -1px 0 rgba(242, 196, 109, 0.08),
+        0 0 38px rgba(47, 125, 70, 0.09);
+}
+
+html[data-site-theme="christmas"] #hero,
+html[data-site-theme="christmas"] #services,
+html[data-site-theme="christmas"] #portfolio,
+html[data-site-theme="christmas"] #about,
+html[data-site-theme="christmas"] #testimonials,
+html[data-site-theme="christmas"] #contact,
+html[data-site-theme="christmas"] footer {
+    position: relative;
+}
+
+html[data-site-theme="christmas"] #hero > .container,
+html[data-site-theme="christmas"] #services > .container,
+html[data-site-theme="christmas"] #portfolio > .container,
+html[data-site-theme="christmas"] #about > .container,
+html[data-site-theme="christmas"] #testimonials > .container,
+html[data-site-theme="christmas"] #contact > .container,
+html[data-site-theme="christmas"] footer > .container {
+    position: relative;
+    z-index: 1;
+}
+
+html[data-site-theme="christmas"] #hero::after,
+html[data-site-theme="christmas"] #portfolio::after,
+html[data-site-theme="christmas"] #contact::after {
+    content: "";
+    position: absolute;
+    inset: auto 0 0;
+    height: 180px;
+    pointer-events: none;
+    background:
+        radial-gradient(circle at 18% 100%, rgba(196, 32, 48, 0.18), transparent 24rem),
+        radial-gradient(circle at 82% 100%, rgba(47, 125, 70, 0.18), transparent 24rem);
+    opacity: 0.75;
+}
+
+html[data-site-theme="christmas"] #hero::before,
+html[data-site-theme="christmas"] #portfolio::before,
+html[data-site-theme="christmas"] #contact::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+        url("../assets/christmas-ornament.svg") left 1.6rem top 5.7rem / clamp(8rem, 15vw, 15rem) auto no-repeat,
+        radial-gradient(circle at 20% 22%, rgba(242, 196, 109, 0.14), transparent 18rem),
+        radial-gradient(circle at 82% 14%, rgba(196, 32, 48, 0.13), transparent 20rem),
+        radial-gradient(circle at 54% 100%, rgba(47, 125, 70, 0.12), transparent 26rem);
+    opacity: 0.9;
+}
+
+html[data-site-theme="christmas"] #services::before,
+html[data-site-theme="christmas"] #about::before,
+html[data-site-theme="christmas"] #testimonials::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+        linear-gradient(90deg, rgba(196, 32, 48, 0.08), transparent 28%, rgba(242, 196, 109, 0.06)),
+        repeating-linear-gradient(135deg, rgba(242, 196, 109, 0.05) 0 1px, transparent 1px 18px);
+    opacity: 0.5;
+}
+
+html[data-site-theme="christmas"] #hero .group:has([data-media-slot="hero.main"]) {
+    border-color: rgba(242, 196, 109, 0.34) !important;
+    box-shadow:
+        0 28px 90px rgba(0, 0, 0, 0.42),
+        0 0 0 1px rgba(242, 196, 109, 0.12),
+        0 0 64px rgba(47, 125, 70, 0.18);
+}
+
+html[data-site-theme="christmas"] #hero .group:has([data-media-slot="hero.main"])::before {
+    content: "";
+    position: absolute;
+    inset: 0.75rem;
+    z-index: 5;
+    pointer-events: none;
+    border: 1px solid rgba(242, 196, 109, 0.38);
+    border-radius: 0.42rem;
+    box-shadow: inset 0 0 28px rgba(242, 196, 109, 0.08);
+}
+
+html[data-site-theme="christmas"] #hero .group:has([data-media-slot="hero.main"])::after {
+    content: "";
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    z-index: 6;
+    width: 4.75rem;
+    height: 4.75rem;
+    pointer-events: none;
+    background: url("../assets/christmas-ornament.svg") center / contain no-repeat;
+    opacity: 0.58;
+    filter: drop-shadow(0 0 18px rgba(242, 196, 109, 0.25));
+}
+
+html[data-site-theme="christmas"] #hero [data-media-slot="hero.main"] {
+    filter: saturate(1.04) contrast(1.06);
+}
+
+html[data-site-theme="christmas"] #portfolio-grid > .group,
+html[data-site-theme="christmas"] #services .group,
+html[data-site-theme="christmas"] #testimonials .group,
+html[data-site-theme="christmas"] #contact form {
+    position: relative;
+    z-index: 1;
+    filter: drop-shadow(0 22px 46px rgba(0, 0, 0, 0.22));
+}
+
+html[data-site-theme="christmas"] #portfolio-grid > .group::before,
+html[data-site-theme="christmas"] #services .group::before,
+html[data-site-theme="christmas"] #testimonials .group::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto auto 0;
+    z-index: 8;
+    width: min(10rem, 46%);
+    height: 3px;
+    pointer-events: none;
+    background: linear-gradient(90deg, #c42030, #2f7d46 48%, #f2c46d);
+    box-shadow: 0 0 18px rgba(242, 196, 109, 0.24);
+}
+
+html[data-site-theme="christmas"] #portfolio-grid > .group > div:first-child,
+html[data-site-theme="christmas"] #services .group,
+html[data-site-theme="christmas"] #about .rounded-2xl,
+html[data-site-theme="christmas"] #testimonials .rounded-xl,
+html[data-site-theme="christmas"] #contact .rounded-2xl {
+    box-shadow:
+        0 18px 60px rgba(0, 0, 0, 0.3),
+        inset 0 0 0 1px rgba(242, 196, 109, 0.05);
+}
+
+html[data-site-theme="christmas"] #portfolio-grid > .group:hover > div:first-child,
+html[data-site-theme="christmas"] #services .group:hover,
+html[data-site-theme="christmas"] #testimonials .rounded-xl:hover {
+    box-shadow:
+        0 24px 80px rgba(0, 0, 0, 0.36),
+        0 0 32px rgba(242, 196, 109, 0.1),
+        inset 0 0 0 1px rgba(242, 196, 109, 0.12);
+}
+
+html[data-site-theme="christmas"] #portfolio-grid > .group > div:first-child::after,
+html[data-site-theme="christmas"] #services .group::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    background:
+        linear-gradient(135deg, rgba(242, 196, 109, 0.14), transparent 22%),
+        linear-gradient(315deg, rgba(47, 125, 70, 0.14), transparent 28%);
+    opacity: 0;
+    transition: opacity 300ms ease;
+}
+
+html[data-site-theme="christmas"] #portfolio-grid > .group:hover > div:first-child::after,
+html[data-site-theme="christmas"] #services .group:hover::after {
+    opacity: 1;
+}
+
+html[data-site-theme="christmas"] #curved-marquee {
+    background:
+        linear-gradient(90deg, rgba(7, 19, 13, 0.94), rgba(23, 37, 27, 0.96), rgba(7, 19, 13, 0.94)) !important;
+    border-color: rgba(242, 196, 109, 0.14) !important;
+}
+
+html[data-site-theme="christmas"] #contact .bg-surface.rounded-2xl {
+    position: relative;
+    overflow: hidden;
+    border-color: rgba(242, 196, 109, 0.2) !important;
+    box-shadow:
+        0 28px 90px rgba(0, 0, 0, 0.34),
+        0 0 46px rgba(47, 125, 70, 0.12),
+        inset 0 0 0 1px rgba(242, 196, 109, 0.06);
+}
+
+html[data-site-theme="christmas"] #contact .bg-surface.rounded-2xl::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+        url("../assets/christmas-ornament.svg") right 1.2rem top 1rem / 6.5rem auto no-repeat,
+        linear-gradient(135deg, rgba(196, 32, 48, 0.12), transparent 30%),
+        linear-gradient(315deg, rgba(242, 196, 109, 0.1), transparent 34%);
+    opacity: 0.78;
+}
+
+html[data-site-theme="christmas"] input,
+html[data-site-theme="christmas"] textarea {
+    caret-color: #f2c46d;
+}
+
+html[data-site-theme="christmas"] input:focus,
+html[data-site-theme="christmas"] textarea:focus {
+    border-color: #f2c46d !important;
+    box-shadow: 0 0 0 1px rgba(242, 196, 109, 0.3) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #christmas-particles {
+        display: none;
+    }
+}
+
+@media (max-width: 767px) {
+    html[data-site-theme="christmas"] #hero::before,
+    html[data-site-theme="christmas"] #portfolio::before,
+    html[data-site-theme="christmas"] #contact::before {
+        background:
+            radial-gradient(circle at 20% 18%, rgba(242, 196, 109, 0.13), transparent 14rem),
+            radial-gradient(circle at 82% 12%, rgba(196, 32, 48, 0.1), transparent 16rem),
+            radial-gradient(circle at 54% 100%, rgba(47, 125, 70, 0.1), transparent 22rem);
+    }
+}
+
+/* ============================================================
    Preloader Gooey Text Morphing
    ============================================================ */
 .filter-gooey {

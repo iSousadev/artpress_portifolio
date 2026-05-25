@@ -11,7 +11,8 @@
       slot: "hero.main",
       label: "Imagem principal do Hero",
       section: "Hero",
-      imageUrl: "assets/optimized/hero-main.webp",
+      imageUrl:
+        "https://imgs.search.brave.com/A13ISWjnVmH9Um2hS6ijSIJURM1-tFqO4hC6QkpOOTo/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly93d3cu/cGF0YXNkYWNhc2Eu/Y29tLmJyL3NpdGVz/L2RlZmF1bHQvZmls/ZXMvc3R5bGVzL2Fy/dGljbGVfZGV0YWls/X2Rlc2t0b3AvcHVi/bGljL2lubGluZS1p/bWFnZXMvbWVtZXMl/MjBkZSUyMGNhY2hv/cnJvJTIwZW5ncmFj/JUNDJUE3YWRvcy5q/cGcud2VicD9pdG9r/PS0zaXJDLWZN",
       alt: "Impressão Premium",
     },
     {
@@ -66,7 +67,10 @@
     ["img/Impressão Digital.png", "assets/optimized/service-digital.webp"],
     ["img/Banners e Faixas.png", "assets/optimized/service-banners.webp"],
     ["img/Cartões de Visita.png", "assets/optimized/service-cards.webp"],
-    ["img/Embalagens Personalizadas.png", "assets/optimized/service-packaging.webp"],
+    [
+      "img/Embalagens Personalizadas.png",
+      "assets/optimized/service-packaging.webp",
+    ],
     ["img/Fachadas & C. Visual.png", "assets/optimized/service-facades.webp"],
     ["images/foto 5.png", "assets/optimized/about-main.webp"],
   ]);
@@ -119,7 +123,9 @@
       }
     });
 
-    return INITIAL_MEDIA.map((base) => incomingBySlot.get(base.slot) || { ...base });
+    return INITIAL_MEDIA.map(
+      (base) => incomingBySlot.get(base.slot) || { ...base },
+    );
   }
 
   function readStorage() {
